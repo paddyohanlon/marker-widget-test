@@ -9,13 +9,60 @@
     <!-- prettier-ignore -->
 
     <script>
-  window.markerConfig = {
-    project: '69b12da25b68ae8ed26c3054', 
-    source: 'snippet'
-  };
+    window.markerConfig = {
+      project: '69b12da25b68ae8ed26c3054',
+      source: 'snippet'
+    };
 
-  !function(e,r,a){if(!e.__Marker){e.__Marker={};var t=[],n={__cs:t};["show","hide","isVisible","capture","cancelCapture","unload","reload","isExtensionInstalled","setReporter","clearReporter","setCustomData","on","off"].forEach(function(e){n[e]=function(){var r=Array.prototype.slice.call(arguments);r.unshift(e),t.push(r)}}),e.Marker=n;var s=r.createElement("script");s.async=1,s.src="https://edge.getmarker.io/latest/shim.js";var i=r.getElementsByTagName("script")[0];i.parentNode.insertBefore(s,i)}}(window,document);
-</script>
+    !function(e,r,a){if(!e.__Marker){e.__Marker={};var t=[],n={__cs:t};["show","hide","isVisible","capture","cancelCapture","unload","reload","isExtensionInstalled","setReporter","clearReporter","setCustomD
+  ata","on","off"].forEach(function(e){n[e]=function(){var r=Array.prototype.slice.call(arguments);r.unshift(e),t.push(r)}}),e.Marker=n;var
+  s=r.createElement("script");s.async=1,s.src="https://edge.getmarker.io/latest/shim.js";var i=r.getElementsByTagName("script")[0];i.parentNode.insertBefore(s,i)}}(window,document);
+
+    // ---- Repro payload for CS-1826 ----
+    (function () {
+      const lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+  laboris nisi ut aliquip ex ea commodo consequat. ';
+      const bigBlob = lorem.repeat(6); // ~1.4 KB per entry
+
+      const httpLog = [];
+      for (let i = 0; i < 50; i++) {
+        httpLog.push({
+          id: i,
+          method: ['GET', 'POST', 'PUT', 'DELETE'][i % 4],
+          url: `https://api.example.com/v1/resource/${i}?expand=details,permissions,owner&filter=active`,
+          status: [200, 201, 400, 500][i % 4],
+          durationMs: 120 + i,
+          requestHeaders: {
+            'authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + 'x'.repeat(180),
+            'content-type': 'application/json',
+            'x-trace-id': 'trace-' + i,
+          },
+          requestBody: { payload: bigBlob, idx: i },
+          responseBody: { data: bigBlob, idx: i, ok: i % 4 !== 2 },
+        });
+      }
+
+      const dashboardFilters = {};
+      for (let i = 0; i < 30; i++) {
+        dashboardFilters['filter_' + i] = { value: bigBlob, enabled: i % 2 === 0 };
+      }
+
+      const userConfig = {
+        preferences: { theme: 'dark', locale: 'en-US', timezone: 'America/New_York' },
+        featureFlags: Object.fromEntries(
+          Array.from({ length: 40 }, (_, i) => ['flag_' + i, { enabled: !!(i % 2), notes: bigBlob }])
+        ),
+      };
+
+      Marker.setCustomData({
+        httpLog: httpLog,                    // ~70 KB JSON
+        dashboardFilters: dashboardFilters,  // ~45 KB JSON
+        userConfig: userConfig,              // ~60 KB JSON
+        sessionId: 'sess-' + Date.now(),
+        buildVersion: '4.12.7-rc.3',
+      });
+    })();
+  </script>
   </head>
   <body>
     <h1>Testing this widget out</h1>
