@@ -14,7 +14,7 @@
       var lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ';
 
       var httpLog = '';
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 25; i++) {
         httpLog +=
           '[' + i + '] ' +
           ['GET', 'POST', 'PUT', 'DELETE'][i % 4] + ' ' +
@@ -35,7 +35,7 @@
         source: 'snippet',
         customData: {
           httpLog: httpLog,                   // ~80 KB string
-          dashboardFilters: dashboardFilters, // ~25 KB string
+          // dashboardFilters: dashboardFilters, // ~25 KB string
           buildVersion: '4.12.7-rc.3',
           sessionId: 'sess-' + Date.now()
         }
